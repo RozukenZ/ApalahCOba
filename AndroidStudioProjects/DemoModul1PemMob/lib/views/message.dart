@@ -1,18 +1,5 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'WhatsApp UI',
-      home: HomeScreen(),
-    );
-  }
-}
+import 'package:demomodul1pemmob/views/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -41,6 +28,18 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('WhatsApp UI'),
         backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              // Tindakan ketika tombol pengaturan ditekan
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: _widgetOptions[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
