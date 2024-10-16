@@ -1,9 +1,9 @@
-import 'package:demomodul1pemmob/views/splashscreen.dart';
+import 'package:demomodul1pemmob/app/views/homescreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'WhatsApp Settings',
       theme: ThemeData.dark(),
-      home: splashscreen(),
+      home: HomeScreen(),
     );
   }
 }
