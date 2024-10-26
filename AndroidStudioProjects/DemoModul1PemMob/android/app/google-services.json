@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "528471202067",
+    "project_id": "message-app-850e0",
+    "storage_bucket": "message-app-850e0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:528471202067:android:ec32de54b7a3625574e2e6",
+        "android_client_info": {
+          "package_name": "com.example.DemoModul1PemMob"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKifIRN7GqAXDdCt_5SXL01qBQNW53P1Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
