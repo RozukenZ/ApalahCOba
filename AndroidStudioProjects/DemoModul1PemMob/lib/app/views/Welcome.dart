@@ -1,4 +1,4 @@
-import 'package:demomodul1pemmob/app/views/homescreen.dart';
+import 'package:demomodul1pemmob/app/views/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class Welcome extends StatelessWidget {
@@ -35,7 +35,7 @@ class Welcome extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                      MaterialPageRoute(builder: (context) => const HomeScreen()),
                     );
                   },
                   style: ElevatedButton.styleFrom(

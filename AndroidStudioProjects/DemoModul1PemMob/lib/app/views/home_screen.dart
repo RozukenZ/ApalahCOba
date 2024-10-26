@@ -2,7 +2,8 @@ import 'package:demomodul1pemmob/app/views/community/community.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:demomodul1pemmob/app/views/settting/settings_screen.dart';
-import 'chat/chatscreen.dart';
+import 'chat/chat_screen.dart';
+import '../controller/auth_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,7 +14,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 1; // Default to "Pesan"
-
+  final AuthController _authController = Get.put(AuthController());
   // List of widgets for each tab
   final List<Widget> _widgetOptions = [
     CommunityScreen(
@@ -41,6 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               // Tindakan ketika tombol pengaturan ditekan
               Get.to(SettingsScreen());
+            },
+          ),
+
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: () {
+              _authController.logout(); // Panggil fungsi logout ketika tombol ditekan.
             },
           ),
         ],

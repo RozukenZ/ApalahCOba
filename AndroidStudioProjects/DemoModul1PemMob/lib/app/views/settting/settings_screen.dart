@@ -39,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: const Text('Settings'),
       ),
       body: ListView(
         children: [
@@ -53,36 +53,36 @@ class SettingsScreen extends StatelessWidget {
                 backgroundColor: Colors.grey,
                 backgroundImage: _settingsViewModel.profilePicture != null
                     ? FileImage(_settingsViewModel.profilePicture!)
-                    : AssetImage('lib/assets/default_avatar.png')
+                    : const AssetImage('lib/assets/default_avatar.png')
                         as ImageProvider,
               ),
             ),
-            title: Text('Blah blah'),
-            subtitle: Text('Hey there! I am using WhatsApp'),
-            trailing: Icon(Icons.qr_code),
+            title: const Text('Blah blah'),
+            subtitle: const Text('Hey there! I am using WhatsApp'),
+            trailing: const Icon(Icons.qr_code),
           ),
           Divider(color: Colors.grey[800]),
-          SettingsListTile(
+          const SettingsListTile(
               icon: Icons.key,
               title: 'Account',
               subtitle: 'Privacy, security, change number'),
-          SettingsListTile(
+          const SettingsListTile(
               icon: Icons.chat,
               title: 'Chats',
               subtitle: 'Theme, wallpapers, chat history'),
-          SettingsListTile(
+          const SettingsListTile(
               icon: Icons.notifications,
               title: 'Notifications',
               subtitle: 'Message, group & call tones'),
-          SettingsListTile(
+          const SettingsListTile(
               icon: Icons.data_usage,
               title: 'Storage and data',
               subtitle: 'Network usage, auto-download'),
-          SettingsListTile(
+          const SettingsListTile(
               icon: Icons.help_outline,
               title: 'Help',
               subtitle: 'Help centre, contact us, privacy policy'),
-          SettingsListTile(
+          const SettingsListTile(
               icon: Icons.group_add, title: 'Invite a friend', subtitle: ''),
         ],
       ),
