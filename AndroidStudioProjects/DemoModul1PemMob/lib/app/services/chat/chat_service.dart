@@ -1,9 +1,7 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:demomodul1pemmob/app/models/message.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-import '../../models/message.dart';
 
 class ChatService extends ChangeNotifier {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -46,5 +44,24 @@ class ChatService extends ChangeNotifier {
         .snapshots();
   }
 
+  Future<void> deleteMessage(String chatRoomId, String messageId) async {
+    await _firestore
+        .collection('chat_rooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .doc(messageId)
+        .delete();
+  }
 
+  Future<void> editMessage(String chatRoomId, String messageId, String newMessageContent) async {
+    await _firestore
+        .collection('chat_rooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .doc(messageId)
+        .update({
+      'message': newMessageContent,
+      'timestamp': Timestamp.now(), // Memperbarui timestamp jika diperlukan
+    });
+  }
 }
