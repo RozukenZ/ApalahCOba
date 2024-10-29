@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:demomodul1pemmob/app/services/chat/chat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiverUserEmail;
@@ -33,7 +34,7 @@ class _ChatPageState extends State<ChatPage> {
             _getChatRoomId(), _editingMessageId!, _messageController.text);
         _editingMessageId = null;
       } else {
-        // If sending new message
+        // If sending a new message
         await _chatService.sendMessage(
             widget.receiverUserID, _messageController.text);
       }
@@ -142,19 +143,19 @@ class _ChatPageState extends State<ChatPage> {
           IconButton(
             icon: const Icon(Icons.videocam, color: Colors.grey),
             onPressed: () {
-              // Ini untuk VideoCall
+              // Video call functionality
             },
           ),
           IconButton(
             icon: const Icon(Icons.call, color: Colors.grey),
             onPressed: () {
-              // Ini untuk telpon biasa
+              // Phone call functionality
             },
           ),
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.grey),
             onPressed: () {
-              // Ini untuk fitur tambahan
+              // Additional features
             },
           ),
         ],
@@ -219,6 +220,10 @@ class _ChatPageState extends State<ChatPage> {
     String messageId = document.id;
     String chatRoomId = _getChatRoomId();
 
+    // Format the timestamp
+    Timestamp timestamp = data['timestamp'];
+    String formattedTime = DateFormat.jm().format(timestamp.toDate()); // Format as "12:00 PM"
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: GestureDetector(
@@ -257,7 +262,7 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '12:00 PM',
+                  formattedTime, // Display the formatted time
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 12,
