@@ -1,4 +1,5 @@
 import 'package:demomodul1pemmob/app/views/community/community.dart';
+import 'package:demomodul1pemmob/app/views/story/story_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:demomodul1pemmob/app/views/settting/settings_screen.dart';
@@ -78,13 +79,4 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class StoryScreen extends StatelessWidget {
-  const StoryScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Halaman Cerita'),
-    );
-  }
-}
