@@ -3,7 +3,8 @@ import 'package:demomodul1pemmob/app/services/chat/chat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../controller/mic_controller.dart'; // Import HomeController di sini
+import '../../controller/mic_controller.dart'; // HomeController
+import '../../controller/controller_tts.dart'; // TTSController
 
 class ChatPage extends StatefulWidget {
   final String receiverUserEmail;
@@ -25,8 +26,21 @@ class _ChatPageState extends State<ChatPage> {
   final FocusNode _focusNode = FocusNode();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
+  final HomeController _homeController = HomeController();
+  final TTSController _ttsController = TTSController(); // Tambahkan TTSController
   String? _editingMessageId;
-  final HomeController _homeController = HomeController(); // Inisialisasi HomeController
+
+  @override
+  void initState() {
+    super.initState();
+    _homeController.onInit();
+  }
+
+  @override
+  void dispose() {
+    _homeController.stopListening();
+    super.dispose();
+  }
 
   void sendMessages() async {
     if (_messageController.text.isNotEmpty) {
@@ -39,7 +53,7 @@ class _ChatPageState extends State<ChatPage> {
             widget.receiverUserID, _messageController.text);
       }
       _messageController.clear();
-      _focusNode.requestFocus(); // Set focus back to the text field
+      _focusNode.requestFocus();
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
@@ -79,6 +93,14 @@ class _ChatPageState extends State<ChatPage> {
               child: const Text("Delete"),
             ),
             TextButton(
+              onPressed: () async {
+                // Memanggil fungsi TTS untuk membaca pesan
+                await _ttsController.speak(currentMessage);
+                Navigator.pop(context);
+              },
+              child: const Text("Read Message"),
+            ),
+            TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
             ),
@@ -88,114 +110,17 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+
   String _getChatRoomId() {
-    List<String> ids = [widget.receiverUserID, _firebaseAuth.currentUser !.uid];
+    List<String> ids = [widget.receiverUserID, _firebaseAuth.currentUser!.uid];
     ids.sort();
     return ids.join("_");
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _homeController.onInit(); // Inisialisasi HomeController
-  }
-
-  @override
-  void dispose() {
-    _homeController.stopListening(); // Hentikan mendengarkan ketika halaman dibuang
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF121B22),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1F2C34),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.grey),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-        CircleAvatar(
-        backgroundColor: Colors.grey[800],
-          child: Text(
-              widget.receiverUserEmail[0].toUpperCase(),
-          style: const TextStyle(color: Colors.white),
-        ),
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.receiverUserEmail,
-              style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold ),
-            ),
-            const Text(
-              'Online',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-      ],
-    ),
-    actions: [
-    IconButton(
-    icon: const Icon(Icons.videocam, color: Colors.grey),
-    onPressed: () {
-    // Video call functionality
-    },
-    ),
-    IconButton(
-    icon: const Icon(Icons.call, color: Colors.grey),
-    onPressed: () {
-    // Phone call functionality
-    },
-    ),
-    IconButton(
-    icon: const Icon(Icons.more_vert, color: Colors.grey),
-    onPressed: () {
-    // Additional features
-    },
-    ),
-    ],
-    ),
-    body: Container(
-    decoration: const BoxDecoration(
-    image: DecorationImage(
-    image: NetworkImage(
-    'https://i.pinimg.com/originals/97/c0/07/97c00759d90d786d9b6096d274ad3e07.png'),
-    fit: BoxFit.cover,
-    opacity: 0.1,
-    ),
-    ),
-    child: Column(
-    children: [
-    Expanded(
-    child: _buildMessageList(),
-    ),
-    _buildMessageInput(),
-    ],
-    ),
-    ),
-    );
   }
 
   Widget _buildMessageList() {
     return StreamBuilder(
       stream: _chatService.getMessages(
-          widget.receiverUserID, _firebaseAuth.currentUser  !.uid),
+          widget.receiverUserID, _firebaseAuth.currentUser!.uid),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
@@ -227,7 +152,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildMessageItem(DocumentSnapshot document) {
     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-    bool isCurrentUser  = data['senderId'] == _firebaseAuth.currentUser  !.uid;
+    bool isCurrentUser = data['senderId'] == _firebaseAuth.currentUser!.uid;
     String messageId = document.id;
     String chatRoomId = _getChatRoomId();
 
@@ -237,13 +162,15 @@ class _ChatPageState extends State<ChatPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: GestureDetector(
-        onLongPress: () {
-          if (isCurrentUser ) {
+        onLongPress: () async {
+          if (isCurrentUser) {
             _showMessageOptions(chatRoomId, messageId, data['message']);
+          } else {
+            await _ttsController.speak(data['message'] ?? "Pesan tidak tersedia");
           }
         },
         child: Align(
-          alignment: isCurrentUser  ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
@@ -255,8 +182,8 @@ class _ChatPageState extends State<ChatPage> {
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isCurrentUser  ? 16 : 4),
-                bottomRight: Radius.circular(isCurrentUser  ? 4 : 16),
+                bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
+                bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
               ),
             ),
             padding: const EdgeInsets.all(12),
@@ -318,11 +245,11 @@ class _ChatPageState extends State<ChatPage> {
           ),
           GestureDetector(
             onLongPressStart: (details) {
-              _homeController.startListening(); // Mulai mendengarkan suara
+              _homeController.startListening();
             },
             onLongPressEnd: (details) {
-              _homeController.stopListening(); // Hentikan mendengarkan suara
-              _messageController.text = _homeController.text.value; // Update TextField dengan teks yang dikenali
+              _homeController.stopListening();
+              _messageController.text = _homeController.text.value;
             },
             child: Container(
               padding: const EdgeInsets.all(12),
@@ -332,9 +259,64 @@ class _ChatPageState extends State<ChatPage> {
           IconButton(
             icon: const Icon(Icons.send, color: Colors.white),
             onPressed: () {
-              sendMessages(); // Kirim pesan saat tombol send ditekan
+              sendMessages();
             },
           ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF121B22),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1F2C34),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.grey),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Colors.grey[800],
+              child: Text(
+                widget.receiverUserEmail[0].toUpperCase(),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.receiverUserEmail,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Text(
+                    'Online',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _buildMessageList(),
+          ),
+          _buildMessageInput(),
         ],
       ),
     );
