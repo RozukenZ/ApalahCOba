@@ -3,6 +3,7 @@ import 'package:demomodul1pemmob/app/views/story/story_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:demomodul1pemmob/app/views/settting/settings_screen.dart';
+import 'VoiceNote/VoiceNoteWidget.dart';
 import 'chat/chat_screen.dart';
 import '../controller/auth_controller.dart';
 
@@ -16,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 1; // Default to "Pesan"
   final AuthController _authController = Get.put(AuthController());
+
   // List of widgets for each tab
   final List<Widget> _widgetOptions = [
     CommunityScreen(
@@ -31,6 +33,19 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Fungsi untuk menampilkan Voice Note
+  void _showVoiceNote() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: VoiceNoteWidget(), // Gunakan VoiceNoteWidget
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,6 +53,13 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('WhatsApp UI'),
         backgroundColor: Colors.green,
         actions: [
+          // Tombol Voice Note baru
+          IconButton(
+            icon: const Icon(Icons.mic),
+            onPressed: _showVoiceNote, // Panggil fungsi untuk menampilkan Voice Note
+            tooltip: 'Voice Note',
+          ),
+
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
@@ -78,5 +100,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
-
