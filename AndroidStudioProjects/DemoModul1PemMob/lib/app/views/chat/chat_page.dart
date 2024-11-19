@@ -3,6 +3,7 @@ import 'package:demomodul1pemmob/app/services/chat/chat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../controller/mic_controller.dart'; // Import HomeController di sini
 
 class ChatPage extends StatefulWidget {
   final String receiverUserEmail;
@@ -25,16 +26,15 @@ class _ChatPageState extends State<ChatPage> {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
   String? _editingMessageId;
+  final HomeController _homeController = HomeController(); // Inisialisasi HomeController
 
   void sendMessages() async {
     if (_messageController.text.isNotEmpty) {
       if (_editingMessageId != null) {
-        // If editing, update the message
         await _chatService.editMessage(
             _getChatRoomId(), _editingMessageId!, _messageController.text);
         _editingMessageId = null;
       } else {
-        // If sending a new message
         await _chatService.sendMessage(
             widget.receiverUserID, _messageController.text);
       }
@@ -89,17 +89,29 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   String _getChatRoomId() {
-    List<String> ids = [widget.receiverUserID, _firebaseAuth.currentUser!.uid];
+    List<String> ids = [widget.receiverUserID, _firebaseAuth.currentUser !.uid];
     ids.sort();
     return ids.join("_");
   }
 
   @override
+  void initState() {
+    super.initState();
+    _homeController.onInit(); // Inisialisasi HomeController
+  }
+
+  @override
+  void dispose() {
+    _homeController.stopListening(); // Hentikan mendengarkan ketika halaman dibuang
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121B22), // WhatsApp dark theme background
+      backgroundColor: const Color(0xFF121B22),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F2C34), // WhatsApp dark theme header
+        backgroundColor: const Color(0xFF1F2C34),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.grey),
@@ -107,84 +119,83 @@ class _ChatPageState extends State<ChatPage> {
         ),
         title: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: Colors.grey[800],
-              child: Text(
-                widget.receiverUserEmail[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.receiverUserEmail,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text(
-                    'Online',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        CircleAvatar(
+        backgroundColor: Colors.grey[800],
+          child: Text(
+              widget.receiverUserEmail[0].toUpperCase(),
+          style: const TextStyle(color: Colors.white),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.videocam, color: Colors.grey),
-            onPressed: () {
-              // Video call functionality
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.call, color: Colors.grey),
-            onPressed: () {
-              // Phone call functionality
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.grey),
-            onPressed: () {
-              // Additional features
-            },
-          ),
-        ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(
-                'https://i.pinimg.com/originals/97/c0/07/97c00759d90d786d9b6096d274ad3e07.png'),
-            fit: BoxFit.cover,
-            opacity: 0.1,
-          ),
-        ),
+      const SizedBox(width: 10),
+      Expanded(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _buildMessageList(),
+            Text(
+              widget.receiverUserEmail,
+              style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold ),
             ),
-            _buildMessageInput(),
+            const Text(
+              'Online',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
           ],
         ),
       ),
+      ],
+    ),
+    actions: [
+    IconButton(
+    icon: const Icon(Icons.videocam, color: Colors.grey),
+    onPressed: () {
+    // Video call functionality
+    },
+    ),
+    IconButton(
+    icon: const Icon(Icons.call, color: Colors.grey),
+    onPressed: () {
+    // Phone call functionality
+    },
+    ),
+    IconButton(
+    icon: const Icon(Icons.more_vert, color: Colors.grey),
+    onPressed: () {
+    // Additional features
+    },
+    ),
+    ],
+    ),
+    body: Container(
+    decoration: const BoxDecoration(
+    image: DecorationImage(
+    image: NetworkImage(
+    'https://i.pinimg.com/originals/97/c0/07/97c00759d90d786d9b6096d274ad3e07.png'),
+    fit: BoxFit.cover,
+    opacity: 0.1,
+    ),
+    ),
+    child: Column(
+    children: [
+    Expanded(
+    child: _buildMessageList(),
+    ),
+    _buildMessageInput(),
+    ],
+    ),
+    ),
     );
   }
 
   Widget _buildMessageList() {
     return StreamBuilder(
       stream: _chatService.getMessages(
-          widget.receiverUserID, _firebaseAuth.currentUser!.uid),
+          widget.receiverUserID, _firebaseAuth.currentUser  !.uid),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
@@ -198,7 +209,7 @@ class _ChatPageState extends State<ChatPage> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(
-              color: Color(0xFF00A884), // WhatsApp green
+              color: Color(0xFF00A884),
             ),
           );
         }
@@ -216,24 +227,23 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildMessageItem(DocumentSnapshot document) {
     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-    bool isCurrentUser = data['senderId'] == _firebaseAuth.currentUser!.uid;
+    bool isCurrentUser  = data['senderId'] == _firebaseAuth.currentUser  !.uid;
     String messageId = document.id;
     String chatRoomId = _getChatRoomId();
 
-    // Format the timestamp
     Timestamp timestamp = data['timestamp'];
-    String formattedTime = DateFormat.jm().format(timestamp.toDate()); // Format as "12:00 PM"
+    String formattedTime = DateFormat.jm().format(timestamp.toDate());
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: GestureDetector(
         onLongPress: () {
-          if (isCurrentUser) {
+          if (isCurrentUser ) {
             _showMessageOptions(chatRoomId, messageId, data['message']);
           }
         },
         child: Align(
-          alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: isCurrentUser  ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
@@ -245,8 +255,8 @@ class _ChatPageState extends State<ChatPage> {
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
-                bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
+                bottomLeft: Radius.circular(isCurrentUser  ? 16 : 4),
+                bottomRight: Radius.circular(isCurrentUser  ? 4 : 16),
               ),
             ),
             padding: const EdgeInsets.all(12),
@@ -262,7 +272,7 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  formattedTime, // Display the formatted time
+                  formattedTime,
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 12,
@@ -289,7 +299,7 @@ class _ChatPageState extends State<ChatPage> {
           Expanded(
             child: TextField(
               controller: _messageController,
-              focusNode: _focusNode, // Associate the FocusNode here
+              focusNode: _focusNode,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Message',
@@ -302,13 +312,28 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ),
               onSubmitted: (value) {
-                sendMessages(); // Send message when Enter is pressed
+                sendMessages();
               },
             ),
           ),
+          GestureDetector(
+            onLongPressStart: (details) {
+              _homeController.startListening(); // Mulai mendengarkan suara
+            },
+            onLongPressEnd: (details) {
+              _homeController.stopListening(); // Hentikan mendengarkan suara
+              _messageController.text = _homeController.text.value; // Update TextField dengan teks yang dikenali
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              child: const Icon(Icons.mic, color: Colors.white),
+            ),
+          ),
           IconButton(
-            icon: const Icon(Icons.send, color: Color(0xFF00A884)),
-            onPressed: sendMessages,
+            icon: const Icon(Icons.send, color: Colors.white),
+            onPressed: () {
+              sendMessages(); // Kirim pesan saat tombol send ditekan
+            },
           ),
         ],
       ),
