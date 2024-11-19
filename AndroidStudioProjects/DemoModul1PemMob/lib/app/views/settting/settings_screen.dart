@@ -13,26 +13,45 @@ class SettingsScreen extends StatelessWidget {
         builder: (BuildContext bc) {
           return SafeArea(
               child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Pilih dari Galeri'),
-                onTap: () {
-                  _settingsViewModel.pickImage(ImageSource.gallery);
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Ambil Foto'),
-                onTap: () {
-                  _settingsViewModel.pickImage(ImageSource.camera);
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
-          ));
+                children: <Widget>[
+                  ListTile(
+                    leading: const Icon(Icons.photo_library),
+                    title: const Text('Pilih dari Galeri'),
+                    onTap: () {
+                      _settingsViewModel.pickImage(ImageSource.gallery);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.photo_camera),
+                    title: const Text('Ambil Foto'),
+                    onTap: () {
+                      _settingsViewModel.pickImage(ImageSource.camera);
+                      Navigator.of(context).pop();
+                    },
+                  )
+                ],
+              ));
         });
+  }
+
+  void _showLargeImage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: _settingsViewModel.profilePicture != null
+                  ? FileImage(_settingsViewModel.profilePicture!)
+                  : const AssetImage('lib/app/assets/default_avatar.png')
+              as ImageProvider,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -46,6 +65,11 @@ class SettingsScreen extends StatelessWidget {
           ListTile(
             leading: GestureDetector(
               onTap: () {
+                if (_settingsViewModel.profilePicture != null) {
+                  _showLargeImage(context);
+                }
+              },
+              onLongPress: () {
                 _showPicker(context);
               },
               child: CircleAvatar(
@@ -54,7 +78,7 @@ class SettingsScreen extends StatelessWidget {
                 backgroundImage: _settingsViewModel.profilePicture != null
                     ? FileImage(_settingsViewModel.profilePicture!)
                     : const AssetImage('lib/assets/default_avatar.png')
-                        as ImageProvider,
+                as ImageProvider,
               ),
             ),
             title: const Text('Blah blah'),
