@@ -3,8 +3,9 @@ import 'package:demomodul1pemmob/app/services/chat/chat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../controller/mic_controller.dart'; // HomeController
-import '../../controller/controller_tts.dart'; // TTSController
+import 'package:geolocator/geolocator.dart';
+import '../../controller/mic_controller.dart';
+import '../../controller/controller_tts.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiverUserEmail;
@@ -27,7 +28,7 @@ class _ChatPageState extends State<ChatPage> {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
   final HomeController _homeController = HomeController();
-  final TTSController _ttsController = TTSController(); // Tambahkan TTSController
+  final TTSController _ttsController = TTSController();
   String? _editingMessageId;
 
   @override
@@ -94,7 +95,6 @@ class _ChatPageState extends State<ChatPage> {
             ),
             TextButton(
               onPressed: () async {
-                // Memanggil fungsi TTS untuk membaca pesan
                 await _ttsController.speak(currentMessage);
                 Navigator.pop(context);
               },
@@ -110,12 +110,55 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-
   String _getChatRoomId() {
     List<String> ids = [widget.receiverUserID, _firebaseAuth.currentUser!.uid];
     ids.sort();
     return ids.join("_");
   }
+
+  // Fungsi untuk mendapatkan lokasi pengguna
+  // Fungsi untuk mendapatkan lokasi pengguna
+  Future<void> _sendLocation() async {
+    Position? position = await _getCurrentLocation();
+    if (position != null) {
+      final locationMessage =
+          'https://www.google.com/maps?q=${position.latitude},${position.longitude}';
+
+      await _chatService.sendMessage(
+          widget.receiverUserID, locationMessage);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lokasi tidak dapat diambil.')),
+      );
+    }
+  }
+
+// Mendapatkan lokasi terkini pengguna
+  Future<Position?> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Periksa apakah layanan lokasi diaktifkan
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return null; // Jika layanan lokasi tidak diaktifkan, kembalikan null
+    }
+
+    // Periksa izin lokasi
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return null; // Jika izin ditolak, kembalikan null
+      }
+    }
+
+    // Ambil posisi pengguna
+    return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+  }
+
 
   Widget _buildMessageList() {
     return StreamBuilder(
@@ -261,6 +304,10 @@ class _ChatPageState extends State<ChatPage> {
             onPressed: () {
               sendMessages();
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.location_on, color: Colors.white),
+            onPressed: _sendLocation, // Mengirim lokasi
           ),
         ],
       ),
