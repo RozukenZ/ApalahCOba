@@ -2,9 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:demomodul1pemmob/app/services/chat/chat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:intl/intl.dart';
 import '../../controller/mic_controller.dart'; // HomeController
 import '../../controller/controller_tts.dart'; // TTSController
+import '../../controller/location_controller.dart';
 
 class ChatPage extends StatefulWidget {
   final String receiverUserEmail;
@@ -28,6 +31,8 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scrollController = ScrollController();
   final HomeController _homeController = HomeController();
   final TTSController _ttsController = TTSController(); // Tambahkan TTSController
+  final LocationController locationController = Get.put(LocationController());
+
   String? _editingMessageId;
 
   @override
@@ -256,6 +261,11 @@ class _ChatPageState extends State<ChatPage> {
               child: const Icon(Icons.mic, color: Colors.white),
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.location_on, color: Colors.red),
+            onPressed: () => locationController.shareLocation(widget.receiverUserID),
+          ),
+
           IconButton(
             icon: const Icon(Icons.send, color: Colors.white),
             onPressed: () {
