@@ -1,16 +1,12 @@
-import 'package:demomodul1pemmob/app/views/home_screen.dart';
+import 'package:demomodul1pemmob/app/models/firebase_options.dart';
+import 'package:demomodul1pemmob/app/services/notification_handler.dart';
+import 'package:demomodul1pemmob/app/routes/app_routes.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'app/models/firebase_options.dart';
-import 'app/services/notification_handler.dart';
-import 'app/views/logreg/login_page.dart';
-import 'app/views/logreg/register_page.dart';
-import 'app/views/welcome_page.dart';
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -29,13 +25,8 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Message App',
       theme: ThemeData.dark(),
-      initialRoute: '/welcome',
-      getPages: [
-        GetPage(name: '/welcome', page: () => const WelcomePage()),  // Halaman welcome
-        GetPage(name: '/login', page: () => const LoginPage()),
-        GetPage(name: '/register', page: () => const RegisterPage()),  // Halaman register
-        GetPage(name: '/home', page: () => const HomeScreen()),
-      ],
+      initialRoute: AppRoutes.welcome,
+      getPages: AppRoutes.routes,
     );
   }
 }

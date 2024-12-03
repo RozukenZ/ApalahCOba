@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controller/auth_controller.dart';
+import '../../routes/app_routes.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -43,7 +44,7 @@ class _RegisterPageState extends State<RegisterPage> {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.offNamed(AppRoutes.welcome),
         ),
         elevation: 0,
       ),
@@ -208,7 +209,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 20),
               Center(
                 child: GestureDetector(
-                  onTap: () => Get.back(), // Navigate to login page
+                  onTap: () => Get.toNamed(AppRoutes.login), // Navigate to login page
                   child: RichText(
                     text: const TextSpan(
                       text: "Already have an account? ",

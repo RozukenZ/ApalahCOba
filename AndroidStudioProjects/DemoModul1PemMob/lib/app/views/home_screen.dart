@@ -1,9 +1,9 @@
 import 'package:demomodul1pemmob/app/views/community/community.dart';
 import 'package:demomodul1pemmob/app/views/story/story_page.dart';
+import 'chat/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:demomodul1pemmob/app/views/settting/settings_screen.dart';
-import 'chat/chat_screen.dart';
+import '../routes/app_routes.dart';
 import '../controller/auth_controller.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.settings),
             onPressed: () {
               // Tindakan ketika tombol pengaturan ditekan
-              Get.to(SettingsScreen());
+              Get.toNamed(AppRoutes.settings);
             },
           ),
 
