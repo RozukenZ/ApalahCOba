@@ -2,9 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:demomodul1pemmob/app/services/chat/chat_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../controller/mic_controller.dart'; // HomeController
 import '../../controller/controller_tts.dart'; // TTSController
+import '../../controller/location_controller.dart';
+
+
 
 class ChatPage extends StatefulWidget {
   final String receiverUserEmail;
@@ -28,6 +34,8 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scrollController = ScrollController();
   final HomeController _homeController = HomeController();
   final TTSController _ttsController = TTSController(); // Tambahkan TTSController
+  final LocationController locationController = Get.put(LocationController());
+
   String? _editingMessageId;
 
   @override
@@ -158,60 +166,87 @@ class _ChatPageState extends State<ChatPage> {
 
     Timestamp timestamp = data['timestamp'];
     String formattedTime = DateFormat.jm().format(timestamp.toDate());
+    String message = data['message'] ?? "Pesan telah dihapus";
+
+    // Fungsi untuk membuka URL
+    Future<void> _launchURL(String url) async {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $url';
+      }
+    }
+
+    // Periksa apakah pesan adalah URL
+    final bool isUrl = message.startsWith('http://') || message.startsWith('https://');
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: GestureDetector(
-        onLongPress: () async {
-          if (isCurrentUser) {
-            _showMessageOptions(chatRoomId, messageId, data['message']);
-          } else {
-            await _ttsController.speak(data['message'] ?? "Pesan tidak tersedia");
-          }
-        },
-        child: Align(
-          alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
-            ),
-            decoration: BoxDecoration(
-              color: isCurrentUser
-                  ? const Color(0xFF005C4B)
-                  : const Color(0xFF1F2C34),
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
-                bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: GestureDetector(
+            onLongPress: () async {
+              if (isCurrentUser) {
+                _showMessageOptions(chatRoomId, messageId, message);
+              } else {
+                await _ttsController.speak(message);
+              }
+            },
+            child: Align(
+              alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.75,
+                ),
+                decoration: BoxDecoration(
+                  color: isCurrentUser
+                      ? const Color(0xFF005C4B)
+                      : const Color(0xFF1F2C34),
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
+                    bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
+                  ),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    isUrl
+                        ? GestureDetector(
+                      onTap: () => _launchURL(message),
+                      child: Text(
+                        message,
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                          fontSize: 16,
+                        ),
+                      ),
+                    )
+                        : Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formattedTime,
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  data['message'] ?? "Pesan telah dihapus",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  formattedTime,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 12,
-                  ),
-                ),
-              ],
             ),
-          ),
-        ),
-      ),
-    );
+        );
   }
+
 
   Widget _buildMessageInput() {
     return Container(
@@ -256,6 +291,11 @@ class _ChatPageState extends State<ChatPage> {
               child: const Icon(Icons.mic, color: Colors.white),
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.location_on, color: Colors.red),
+            onPressed: () => locationController.shareLocation(widget.receiverUserID),
+          ),
+
           IconButton(
             icon: const Icon(Icons.send, color: Colors.white),
             onPressed: () {
