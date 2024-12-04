@@ -7,20 +7,15 @@ class LocationController extends GetxController {
   final ChatService chatService = ChatService();
 
   /// Fungsi untuk berbagi lokasi
-  Future<void> shareLocation(String receiverUserID) async {
-    print("shareLocation called for receiverUserID: $receiverUserID");
-
-    // Ambil lokasi saat ini
+  Future<void> shareLocation(String receiverId) async {
     String? locationMessage = await locationService.getCurrentLocation();
 
-    // Jika lokasi berhasil diambil, kirimkan lokasi
     if (locationMessage != null) {
       print("Location fetched: $locationMessage");
 
-      // Kirim pesan melalui ChatService
-      await chatService.sendMessage(receiverUserID, locationMessage);
+      // Kirim lokasi ke pengguna melalui ChatService
+      await chatService.sendMessage(receiverId, locationMessage);
 
-      // Tampilkan notifikasi sukses
       Get.snackbar("Success", "Location shared successfully!");
     } else {
       print("Failed to fetch location");

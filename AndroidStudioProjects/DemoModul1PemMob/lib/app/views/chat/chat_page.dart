@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../controller/mic_controller.dart'; // HomeController
 import '../../controller/controller_tts.dart'; // TTSController
 import '../../controller/location_controller.dart';
@@ -163,15 +164,29 @@ class _ChatPageState extends State<ChatPage> {
 
     Timestamp timestamp = data['timestamp'];
     String formattedTime = DateFormat.jm().format(timestamp.toDate());
+    String message = data['message'] ?? "Pesan telah dihapus";
+
+    // Fungsi untuk membuka URL
+    Future<void> _launchURL(String url) async {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $url';
+      }
+    }
+
+    // Periksa apakah pesan adalah URL
+    final bool isUrl = message.startsWith('http://') || message.startsWith('https://');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: GestureDetector(
         onLongPress: () async {
           if (isCurrentUser) {
-            _showMessageOptions(chatRoomId, messageId, data['message']);
+            _showMessageOptions(chatRoomId, messageId, message);
           } else {
-            await _ttsController.speak(data['message'] ?? "Pesan tidak tersedia");
+            await _ttsController.speak(message);
           }
         },
         child: Align(
@@ -195,8 +210,20 @@ class _ChatPageState extends State<ChatPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  data['message'] ?? "Pesan telah dihapus",
+                isUrl
+                    ? GestureDetector(
+                  onTap: () => _launchURL(message),
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                      fontSize: 16,
+                    ),
+                  ),
+                )
+                    : Text(
+                  message,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,

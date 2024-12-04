@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
+
 class LocationService {
   /// Memastikan layanan lokasi diaktifkan
   Future<bool> _checkLocationServiceEnabled() async {
@@ -24,8 +25,8 @@ class LocationService {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      Get.snackbar(
-          "Error", "Location permissions are permanently denied. Please enable permissions in settings.");
+      Get.snackbar("Error",
+          "Location permissions are permanently denied. Please enable permissions in settings.");
       return false;
     }
     return true;
@@ -33,22 +34,22 @@ class LocationService {
 
   /// Mendapatkan lokasi saat ini
   Future<String?> getCurrentLocation() async {
-    // Pastikan layanan dan izin lokasi tersedia
     if (!await _checkLocationServiceEnabled() ||
         !await _requestLocationPermission()) {
       return null;
     }
 
     try {
-      // Ambil lokasi dengan akurasi tinggi
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
       // Format hasil ke dalam link Google Maps
-      return "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
+      String locationUrl =
+          "https://www.google.com/maps?q=${position.latitude},${position.longitude}";
+      print("Generated Location URL: $locationUrl");
+      return locationUrl;
     } catch (e) {
-      // Tangani error ketika pengambilan lokasi gagal
       Get.snackbar("Error", "Failed to get location: $e");
       return null;
     }
