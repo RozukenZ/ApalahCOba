@@ -8,7 +8,7 @@ import '../../models/VoiceNote.dart';
 class VoiceNoteService
 {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final Record _audioRecorder = Record();
+  final _audioRecorder = AudioRecorder();
   bool _isRecording = false;
 
   Future<bool> requestPermissions() async
@@ -36,7 +36,7 @@ class VoiceNoteService
 
     try
     {
-      await _audioRecorder.start(
+      await _audioRecorder.start(const RecordConfig(),
         path: filePath
       );
       _isRecording = true;
