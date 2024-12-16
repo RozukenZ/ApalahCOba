@@ -70,6 +70,7 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+
   Future<void> _deleteMessage(String chatRoomId, String messageId) async {
     await _chatService.deleteMessage(chatRoomId, messageId);
   }
@@ -158,7 +159,8 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildMessageItem(DocumentSnapshot document) {
+  Widget _buildMessageItem(DocumentSnapshot document)
+  {
     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
     bool isCurrentUser = data['senderId'] == _firebaseAuth.currentUser!.uid;
     String messageId = document.id;
@@ -167,6 +169,11 @@ class _ChatPageState extends State<ChatPage> {
     Timestamp timestamp = data['timestamp'];
     String formattedTime = DateFormat.jm().format(timestamp.toDate());
     String message = data['message'] ?? "Pesan telah dihapus";
+
+    // New status tracking
+    bool isSent = data['isSent'] ?? false;
+    bool isDelivered = data['isDelivered'] ?? false;
+    bool isRead = data['isRead'] ?? false;
 
     // Fungsi untuk membuka URL
     Future<void> _launchURL(String url) async {
@@ -182,69 +189,91 @@ class _ChatPageState extends State<ChatPage> {
     final bool isUrl = message.startsWith('http://') || message.startsWith('https://');
 
     return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: GestureDetector(
-            onLongPress: () async {
-              if (isCurrentUser) {
-                _showMessageOptions(chatRoomId, messageId, message);
-              } else {
-                await _ttsController.speak(message);
-              }
-            },
-            child: Align(
-              alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.75,
-                ),
-                decoration: BoxDecoration(
-                  color: isCurrentUser
-                      ? const Color(0xFF005C4B)
-                      : const Color(0xFF1F2C34),
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(16),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
-                    bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
-                  ),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: GestureDetector(
+        onLongPress: () async {
+          if (isCurrentUser) {
+            _showMessageOptions(chatRoomId, messageId, message);
+          } else {
+            await _ttsController.speak(message);
+          }
+        },
+        child: Align(
+          alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
+            ),
+            decoration: BoxDecoration(
+              color: isCurrentUser
+                  ? const Color(0xFF005C4B)
+                  : const Color(0xFF1F2C34),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
+                bottomLeft: Radius.circular(isCurrentUser ? 16 : 4),
+                bottomRight: Radius.circular(isCurrentUser ? 4 : 16),
+              ),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    isUrl
-                        ? GestureDetector(
-                      onTap: () => _launchURL(message),
-                      child: Text(
+                    Expanded(
+                      child: isUrl
+                          ? GestureDetector(
+                        onTap: () => _launchURL(message),
+                        child: Text(
+                          message,
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                            fontSize: 16,
+                          ),
+                        ),
+                      )
+                          : Text(
                         message,
                         style: const TextStyle(
-                          color: Colors.blue,
-                          decoration: TextDecoration.underline,
+                          color: Colors.white,
                           fontSize: 16,
                         ),
                       ),
-                    )
-                        : Text(
-                      message,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      formattedTime,
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 12,
+                    // Status Indicator for sent messages
+                    if (isCurrentUser)
+                      Icon(
+                        isRead
+                            ? Icons.done_all
+                            : isDelivered
+                            ? Icons.done_all
+                            : isSent
+                            ? Icons.done
+                            : Icons.access_time,
+                        color: isRead
+                            ? Colors.blue
+                            : Colors.white54,
+                        size: 16,
                       ),
-                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  formattedTime,
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
-            ),
-        );
+          ),
+        ),
+      ),
+    );
   }
 
 
