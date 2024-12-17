@@ -55,7 +55,8 @@ class ConnectivityController extends GetxController {
       for (var messageData in offlineMessages) {
         await chatService.sendMessage(
             messageData['receiverId'],
-            messageData['message']
+            messageData['message'],
+            isSent: true
         );
       }
       // Clear offline messages after sync

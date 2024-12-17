@@ -18,7 +18,7 @@ class LocationController extends GetxController {
       print("Location fetched: $locationMessage");
 
       // Kirim pesan melalui ChatService
-      await chatService.sendMessage(receiverUserID, locationMessage);
+      await chatService.sendMessage(receiverUserID, locationMessage, isSent: true);
 
       // Tampilkan notifikasi sukses
       Get.snackbar("Success", "Location shared successfully!");
