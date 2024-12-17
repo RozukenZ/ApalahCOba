@@ -1,10 +1,11 @@
-import 'package:demomodul1pemmob/app/views/community/community.dart';
-import 'package:demomodul1pemmob/app/views/story/story_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:demomodul1pemmob/app/views/community/community.dart';
+import 'package:demomodul1pemmob/app/views/story/story_page.dart';
 import 'package:demomodul1pemmob/app/views/settting/settings_screen.dart';
-import 'chat/chat_screen.dart';
+import 'package:demomodul1pemmob/app/views/weather/weather_screen.dart'; // Import halaman cuaca
 import '../controller/auth_controller.dart';
+import 'chat/chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,15 +15,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 1; // Default to "Pesan"
+  int _selectedIndex = 1; // Default ke "Pesan"
   final AuthController _authController = Get.put(AuthController());
-  // List of widgets for each tab
+
+  // Tambahkan halaman baru ke list
   final List<Widget> _widgetOptions = [
-    CommunityScreen(
-      url: 'https://blog.whatsapp.com/',
-    ),
+    CommunityScreen(url: 'https://blog.whatsapp.com/'),
     const ChatScreen(),
     const StoryScreen(),
+    WeatherScreen(), // Halaman baru
   ];
 
   void _onItemTapped(int index) {
@@ -41,15 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // Tindakan ketika tombol pengaturan ditekan
               Get.to(SettingsScreen());
             },
           ),
-
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             onPressed: () {
-              _authController.logout(); // Panggil fungsi logout ketika tombol ditekan.
+              _authController.logout();
             },
           ),
         ],
@@ -69,6 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.photo),
             label: 'Cerita',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.cloud),
+            label: 'Cuaca', // Tab baru
+          ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -78,5 +81,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
-
