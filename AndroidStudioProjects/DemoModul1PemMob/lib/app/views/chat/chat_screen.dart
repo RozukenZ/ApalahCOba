@@ -22,34 +22,32 @@ class _ChatScreenState extends State<ChatScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Chats'), // Optional: Add a title to the app bar
+        title: const Text('Chats'),
       ),
       body: Column(
-          children: [
-      // Remove padding above the search bar
-      Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value.toLowerCase();
-          });
-        },
-        decoration: InputDecoration(
-          hintText: 'Search users...',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search users...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                prefixIcon: const Icon(Icons.search),
+              ),
+            ),
           ),
-          prefixIcon: const Icon(Icons.search),
-        ),
+          const SizedBox(height: 8),
+          Expanded(child: _buildUserList()),
+        ],
       ),
-    ),
-    // Add a SizedBox for spacing below the search bar
-    const SizedBox(height: 8),
-    Expanded(child: _buildUserList()), // Make user list take remaining space
-    ],
-    ),
     );
   }
 
@@ -71,9 +69,9 @@ class _ChatScreenState extends State<ChatScreen> {
         }).toList();
 
         return ListView(
-            children: filteredDocs
-                .map<Widget>((doc) => _buildUserListItem(doc))
-            .toList(),
+          children: filteredDocs
+              .map<Widget>((doc) => _buildUserListItem(doc))
+              .toList(),
         );
       },
     );
@@ -82,7 +80,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildUserListItem(DocumentSnapshot document) {
     Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
 
-    if (_firebaseAuth.currentUser !.email != data['email']) {
+    // Pastikan pengguna yang berbeda bisa melihat chat masing-masing
+    if (_firebaseAuth.currentUser!.email != data['email']) {
       return Card(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         shape: RoundedRectangleBorder(
@@ -103,34 +102,106 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Colors.white,
             ),
           ),
-          subtitle: Text(
-            'Last message here...',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-              overflow: TextOverflow.ellipsis,
-            ),
+          subtitle: StreamBuilder<QuerySnapshot>(
+            // Perubahan: Gunakan chat room ID yang unik untuk setiap pasangan pengguna
+            stream: FirebaseFirestore.instance
+                .collection('chat_rooms')
+                .doc(_generateChatRoomId(data['uid']))
+                .collection('messages')
+                .orderBy('timestamp', descending: true)
+                .limit(1)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Text(
+                  'Loading...',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                );
+              }
+              if (snapshot.hasError) {
+                return Text(
+                  'Error fetching last message',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                );
+              }
+
+              if (snapshot.data != null && snapshot.data!.docs.isNotEmpty) {
+                var lastMessage = snapshot.data!.docs.first;
+                return Text(
+                  lastMessage['message'],
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              } else {
+                return Text(
+                  'No messages yet',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                );
+              }
+            },
           ),
           trailing: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '12:30 PM',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                ),
-              ),
-              const SizedBox(height: 5),
-              const CircleAvatar(
-                radius: 10,
-                backgroundColor: Colors.green,
-                child: Icon(
-                  Icons.check,
-                  size: 12,
-                  color: Colors.white,
-                ),
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('chat_rooms')
+                    .doc(_generateChatRoomId(data['uid']))
+                    .collection('messages')
+                    .orderBy('timestamp', descending: true)
+                    .limit(1)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Text(
+                      'Loading...',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Text(
+                      'Error',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    );
+                  }
+
+                  if (snapshot.data != null && snapshot.data!.docs.isNotEmpty) {
+                    var lastMessage = snapshot.data!.docs.first;
+                    bool isRead = lastMessage['isRead'] ?? false; // Cek status isRead
+                    var timestamp = (lastMessage['timestamp'] as Timestamp).toDate();
+                    String time = '${timestamp.hour}:${timestamp.minute}';
+
+                    return Column(
+                      children: [
+                        Text(
+                          time, // Menampilkan waktu pesan
+                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                        ),
+                        const SizedBox(height: 5),
+                        // Jika pesan belum dibaca, tampilkan centang hijau
+                        if (!isRead)
+                          const CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Colors.green,
+                            child: Icon(
+                              Icons.check,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                      ],
+                    );
+                  } else {
+                    return Text(
+                      'No messages yet',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -150,5 +221,11 @@ class _ChatScreenState extends State<ChatScreen> {
     } else {
       return Container();
     }
+  }
+
+  String _generateChatRoomId(String receiverUID) {
+    return _firebaseAuth.currentUser!.uid.hashCode < receiverUID.hashCode
+        ? '${_firebaseAuth.currentUser!.uid}_${receiverUID}'
+        : '${receiverUID}_${_firebaseAuth.currentUser!.uid}';
   }
 }

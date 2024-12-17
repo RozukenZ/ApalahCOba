@@ -22,6 +22,7 @@ class ChatPage extends StatefulWidget {
     required this.receiverUserID,
   }) : super(key: key);
 
+
   @override
   _ChatPageState createState() => _ChatPageState();
 }
@@ -287,8 +288,8 @@ class _ChatPageState extends State<ChatPage> {
         // Filter offline messages for current chat
         List<dynamic> currentUserOfflineMessages = offlineMessages
             .where((msg) =>
-                msg['receiverUserId'] == widget.receiverUserID &&
-                msg['senderId'] == _firebaseAuth.currentUser!.uid)
+        msg['receiverUserId'] == widget.receiverUserID &&
+            msg['senderId'] == _firebaseAuth.currentUser!.uid)
             .toList();
 
         // Error handling
@@ -314,17 +315,17 @@ class _ChatPageState extends State<ChatPage> {
         List<dynamic> allMessages = [
           ...snapshot.data?.docs ?? [],
           ...currentUserOfflineMessages.map((offlineMsg) => {
-                'id': offlineMsg['uniqueId'],
-                'data': () => {
-                      'senderId': _firebaseAuth.currentUser!.uid,
-                      'message': offlineMsg['message'],
-                      'timestamp': Timestamp.fromDate(
-                          DateTime.parse(offlineMsg['timestamp'])),
-                      'isSent': false,
-                      'isDelivered': false,
-                      'isRead': false,
-                    }
-              }),
+            'id': offlineMsg['uniqueId'],
+            'data': () => {
+              'senderId': _firebaseAuth.currentUser!.uid,
+              'message': offlineMsg['message'],
+              'timestamp': Timestamp.fromDate(
+                  DateTime.parse(offlineMsg['timestamp'])),
+              'isSent': false,
+              'isDelivered': false,
+              'isRead': false,
+            }
+          }).toList(),
         ];
 
         // No messages
@@ -340,10 +341,15 @@ class _ChatPageState extends State<ChatPage> {
         // Sort messages by timestamp
         allMessages.sort((a, b) {
           var timestampA =
-              a is DocumentSnapshot ? a['timestamp'] : a['data']()['timestamp'];
+          a is DocumentSnapshot ? a['timestamp'] : a['data']()['timestamp'];
           var timestampB =
-              b is DocumentSnapshot ? b['timestamp'] : b['data']()['timestamp'];
+          b is DocumentSnapshot ? b['timestamp'] : b['data']()['timestamp'];
           return timestampA.compareTo(timestampB);
+        });
+
+        // Scroll to bottom when new messages are added
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
         });
 
         return ListView(
@@ -351,8 +357,8 @@ class _ChatPageState extends State<ChatPage> {
           padding: const EdgeInsets.all(12),
           children: allMessages
               .map((message) => message is DocumentSnapshot
-                  ? _buildMessageItem(message)
-                  : _buildOfflineMessageItem(message['data'](), message['id']))
+              ? _buildMessageItem(message)
+              : _buildOfflineMessageItem(message['data'](), message['id']))
               .toList(),
         );
       },

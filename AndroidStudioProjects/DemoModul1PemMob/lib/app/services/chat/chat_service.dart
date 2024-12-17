@@ -7,7 +7,6 @@ class ChatService extends ChangeNotifier {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-
   Future<void> sendMessage(String receiverId, String message, {required bool isSent}) async {
     final String currentUserId = _firebaseAuth.currentUser!.uid;
     final String currentUserEmail = _firebaseAuth.currentUser!.email.toString();
@@ -48,7 +47,7 @@ class ChatService extends ChangeNotifier {
         .collection('chat_rooms')
         .doc(chatRoomId)
         .collection('messages')
-        .orderBy('timestamp', descending: false)
+        .orderBy('timestamp', descending: false) // Display messages in chronological order
         .snapshots();
   }
 
@@ -94,4 +93,3 @@ class ChatService extends ChangeNotifier {
     });
   }
 }
-
