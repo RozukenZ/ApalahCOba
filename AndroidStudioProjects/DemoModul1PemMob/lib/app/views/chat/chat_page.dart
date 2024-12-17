@@ -34,6 +34,7 @@ class _ChatPageState extends State<ChatPage> {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
   final GetStorage _storage = GetStorage();
+  late Stream<QuerySnapshot> _messagesStream;
 
   // GetX Controllers
   late HomeController _homeController;
@@ -53,10 +54,12 @@ class _ChatPageState extends State<ChatPage> {
     _locationController = Get.put(LocationController());
     _connectivityController = Get.put(ConnectivityController());
 
-    // Initialize home controller
     _homeController.onInit();
 
-    // Listen to connectivity changes
+    final currentUserId = _firebaseAuth.currentUser!.uid;
+    _messagesStream = _chatService.getMessages(currentUserId, widget.receiverUserID);
+    _markMessagesAsRead(currentUserId, widget.receiverUserID);
+
     ever(_connectivityController.isConnected, (isConnected) {
       if (isConnected) {
         // Sync offline messages when connection is restored
@@ -67,9 +70,31 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  @override
-  void dispose()
+  Future<void> _markMessagesAsRead(String currentUserId, String receiverId) async
   {
+    String chatRoomId = _getChatRoomId();
+
+    QuerySnapshot unreadMessages = await FirebaseFirestore.instance
+        .collection('chat_rooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .where('receiverId',
+            isEqualTo:
+                currentUserId) // Filter messages sent to the current user
+        .where('isRead', isEqualTo: false) // Only unread messages
+        .get();
+
+    for (var doc in unreadMessages.docs) {
+      await _chatService.updateMessageStatus(
+        chatRoomId: chatRoomId,
+        messageId: doc.id,
+        isRead: true,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
     // Clean up controllers
     _homeController.stopListening();
     _messageController.dispose();
@@ -78,9 +103,7 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-
-  void _showOfflineWarning()
-  {
+  void _showOfflineWarning() {
     Get.snackbar(
       'No Internet',
       'Connection Lost. Messages may not be sent.',
@@ -114,6 +137,7 @@ class _ChatPageState extends State<ChatPage> {
         await _chatService.sendMessage(
           widget.receiverUserID,
           _messageController.text.trim(),
+          isSent: true,
         );
       }
 
@@ -131,34 +155,58 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void _saveOfflineMessage(String message)
-  {
+  void _saveOfflineMessage(String message) {
     List<dynamic> offlineMessages = _storage.read('offline_messages') ?? [];
+
+    // Tambahkan informasi tambahan untuk memudahkan tracking
     offlineMessages.add({
       'message': message,
       'receiverUserId': widget.receiverUserID,
+      'receiverUserEmail': widget.receiverUserEmail,
+      'senderId': _firebaseAuth.currentUser!.uid,
       'timestamp': DateTime.now().toIso8601String(),
+      'uniqueId': DateTime.now()
+          .millisecondsSinceEpoch
+          .toString(), // Tambahkan unique identifier
     });
+
     _storage.write('offline_messages', offlineMessages);
+
+    // Perbarui state untuk menampilkan pesan di UI
+    setState(() {});
   }
 
   void _syncOfflineMessages() async {
     List<dynamic> offlineMessages = _storage.read('offline_messages') ?? [];
+    List<dynamic> remainingMessages = [];
 
     if (offlineMessages.isNotEmpty) {
       for (var messageData in offlineMessages) {
         try {
+          // Kirim pesan ke server
           await _chatService.sendMessage(
-              messageData['receiverUserId'],
-              messageData['message']
-          );
+              messageData['receiverUserId'], messageData['message'],
+              isSent: true);
+
+          // Jika pesan berhasil dikirim, hapus dari offline storage
+          print('Offline message sent: ${messageData['message']}');
+
+          // Pesan yang berhasil dikirim harus dihapus dari offline storage
+          // (Jika Anda ingin menyimpannya sebagai pesan yang berhasil dikirim, Anda bisa menyimpannya di tempat lain, seperti Firestore)
+          // Hapus pesan offline yang sudah berhasil dikirim
+          remainingMessages.remove(messageData);
         } catch (e) {
+          // Jika gagal mengirim, simpan kembali ke daftar pesan offline
+          remainingMessages.add(messageData);
           print('Failed to send offline message: $e');
         }
       }
 
-      // Clear offline messages after sending
-      _storage.remove('offline_messages');
+      // Perbarui daftar pesan offline yang tersisa (pesan yang gagal terkirim)
+      _storage.write('offline_messages', remainingMessages);
+
+      // Perbarui UI untuk menampilkan pesan terkirim (status dikirim)
+      setState(() {});
     }
   }
 
@@ -166,15 +214,14 @@ class _ChatPageState extends State<ChatPage> {
     await _chatService.deleteMessage(chatRoomId, messageId);
   }
 
-  void _editMessage(String chatRoomId, String messageId, String currentMessage) {
+  void _editMessage(
+      String chatRoomId, String messageId, String currentMessage) {
     _editingMessageId = messageId;
     _messageController.text = currentMessage;
   }
 
-  void _scrollToBottom()
-  {
-    if (_scrollController.hasClients)
-    {
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
@@ -183,7 +230,8 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void _showMessageOptions(String chatRoomId, String messageId, String currentMessage) {
+  void _showMessageOptions(
+      String chatRoomId, String messageId, String currentMessage) {
     showDialog(
       context: context,
       builder: (context) {
@@ -191,8 +239,7 @@ class _ChatPageState extends State<ChatPage> {
           title: const Text("Choose an option"),
           actions: [
             TextButton(
-              onPressed: ()
-              {
+              onPressed: () {
                 _editMessage(chatRoomId, messageId, currentMessage);
                 Navigator.pop(context);
               },
@@ -223,22 +270,27 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  String _getChatRoomId()
-  {
+  String _getChatRoomId() {
     List<String> ids = [widget.receiverUserID, _firebaseAuth.currentUser!.uid];
     ids.sort();
     return ids.join("_");
   }
 
-  Widget _buildMessageList()
-  {
+  Widget _buildMessageList() {
     return StreamBuilder(
       stream: _chatService.getMessages(
-          widget.receiverUserID,
-          _firebaseAuth.currentUser!.uid
-      ),
-      builder: (context, snapshot)
-      {
+          widget.receiverUserID, _firebaseAuth.currentUser!.uid),
+      builder: (context, snapshot) {
+        // Get offline messages
+        List<dynamic> offlineMessages = _storage.read('offline_messages') ?? [];
+
+        // Filter offline messages for current chat
+        List<dynamic> currentUserOfflineMessages = offlineMessages
+            .where((msg) =>
+                msg['receiverUserId'] == widget.receiverUserID &&
+                msg['senderId'] == _firebaseAuth.currentUser!.uid)
+            .toList();
+
         // Error handling
         if (snapshot.hasError) {
           return Center(
@@ -250,8 +302,7 @@ class _ChatPageState extends State<ChatPage> {
         }
 
         // Loading state
-        if (snapshot.connectionState == ConnectionState.waiting)
-        {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: CircularProgressIndicator(
               color: Color(0xFF00A884),
@@ -259,8 +310,25 @@ class _ChatPageState extends State<ChatPage> {
           );
         }
 
+        // Combine Firestore messages with offline messages
+        List<dynamic> allMessages = [
+          ...snapshot.data?.docs ?? [],
+          ...currentUserOfflineMessages.map((offlineMsg) => {
+                'id': offlineMsg['uniqueId'],
+                'data': () => {
+                      'senderId': _firebaseAuth.currentUser!.uid,
+                      'message': offlineMsg['message'],
+                      'timestamp': Timestamp.fromDate(
+                          DateTime.parse(offlineMsg['timestamp'])),
+                      'isSent': false,
+                      'isDelivered': false,
+                      'isRead': false,
+                    }
+              }),
+        ];
+
         // No messages
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        if (allMessages.isEmpty) {
           return const Center(
             child: Text(
               'No messages yet',
@@ -269,18 +337,92 @@ class _ChatPageState extends State<ChatPage> {
           );
         }
 
+        // Sort messages by timestamp
+        allMessages.sort((a, b) {
+          var timestampA =
+              a is DocumentSnapshot ? a['timestamp'] : a['data']()['timestamp'];
+          var timestampB =
+              b is DocumentSnapshot ? b['timestamp'] : b['data']()['timestamp'];
+          return timestampA.compareTo(timestampB);
+        });
+
         return ListView(
           controller: _scrollController,
           padding: const EdgeInsets.all(12),
-          children: snapshot.data!.docs
-              .map((document) => _buildMessageItem(document))
+          children: allMessages
+              .map((message) => message is DocumentSnapshot
+                  ? _buildMessageItem(message)
+                  : _buildOfflineMessageItem(message['data'](), message['id']))
               .toList(),
         );
       },
     );
   }
-  Widget _buildMessageItem(DocumentSnapshot document)
-  {
+
+// Modifikasi method untuk menampilkan pesan offline
+  Widget _buildOfflineMessageItem(Map<String, dynamic> data, String uniqueId) {
+    return Padding(
+      key: Key(uniqueId), // Tambahkan key untuk tracking
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFF005C4B).withOpacity(0.5),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: Text(
+                      data['message'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.access_time,
+                    color: Colors.white54,
+                    size: 16,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Menunggu Terkirim',
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 12,
+                ),
+              ),
+              // Tambahkan indikator status terkirim
+              if (data['isSent'] == true)
+                Text(
+                  'Terkirim',
+                  style: TextStyle(
+                    color: Colors.green[400],
+                    fontSize: 12,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageItem(DocumentSnapshot document) {
     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
     bool isCurrentUser = data['senderId'] == _firebaseAuth.currentUser!.uid;
     String messageId = document.id;
@@ -306,7 +448,8 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     // Periksa apakah pesan adalah URL
-    final bool isUrl = message.startsWith('http://') || message.startsWith('https://');
+    final bool isUrl =
+        message.startsWith('http://') || message.startsWith('https://');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -319,7 +462,8 @@ class _ChatPageState extends State<ChatPage> {
           }
         },
         child: Align(
-          alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+          alignment:
+              isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
@@ -345,23 +489,23 @@ class _ChatPageState extends State<ChatPage> {
                     Expanded(
                       child: isUrl
                           ? GestureDetector(
-                        onTap: () => _launchURL(message),
-                        child: Text(
-                          message,
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            decoration: TextDecoration.underline,
-                            fontSize: 16,
-                          ),
-                        ),
-                      )
+                              onTap: () => _launchURL(message),
+                              child: Text(
+                                message,
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            )
                           : Text(
-                        message,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
+                              message,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
                     ),
                     // Status Indicator for sent messages
                     if (isCurrentUser)
@@ -369,13 +513,11 @@ class _ChatPageState extends State<ChatPage> {
                         isRead
                             ? Icons.done_all
                             : isDelivered
-                            ? Icons.done_all
-                            : isSent
-                            ? Icons.done
-                            : Icons.access_time,
-                        color: isRead
-                            ? Colors.blue
-                            : Colors.white54,
+                                ? Icons.done_all
+                                : isSent
+                                    ? Icons.done
+                                    : Icons.access_time,
+                        color: isRead ? Colors.blue : Colors.white54,
                         size: 16,
                       ),
                   ],
@@ -395,7 +537,6 @@ class _ChatPageState extends State<ChatPage> {
       ),
     );
   }
-
 
   Widget _buildMessageInput() {
     return Container(
@@ -442,9 +583,9 @@ class _ChatPageState extends State<ChatPage> {
           ),
           IconButton(
             icon: const Icon(Icons.location_on, color: Colors.red),
-            onPressed: () => _locationController.shareLocation(widget.receiverUserID),
+            onPressed: () =>
+                _locationController.shareLocation(widget.receiverUserID),
           ),
-
           IconButton(
             icon: const Icon(Icons.send, color: Colors.white),
             onPressed: () {
@@ -459,79 +600,78 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
-      backgroundColor: const Color(0xFF121B22),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1F2C34),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.grey),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: Colors.grey[800],
-              child: Text(
-                widget.receiverUserEmail[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white),
-              ),
+          backgroundColor: const Color(0xFF121B22),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF1F2C34),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.grey),
+              onPressed: () => Navigator.pop(context),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.receiverUserEmail,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+            title: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.grey[800],
+                  child: Text(
+                    widget.receiverUserEmail[0].toUpperCase(),
+                    style: const TextStyle(color: Colors.white),
                   ),
-                  Text(
-                    _connectivityController.isConnected.value
-                        ? 'Online'
-                        : 'Offline',
-                    style: TextStyle(
-                        color: _connectivityController.isConnected.value
-                            ? Colors.grey
-                            : Colors.red,
-                        fontSize: 12
-                    ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.receiverUserEmail,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        _connectivityController.isConnected.value
+                            ? 'Online'
+                            : 'Offline',
+                        style: TextStyle(
+                            color: _connectivityController.isConnected.value
+                                ? Colors.grey
+                                : Colors.red,
+                            fontSize: 12),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _buildMessageList(),
           ),
-          _buildMessageInput(),
-        ],
-      ),
-      bottomSheet: !_connectivityController.isConnected.value
-          ? Container(
-        color: Colors.red,
-        padding: const EdgeInsets.all(8),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.signal_wifi_off, color: Colors.white),
-            SizedBox(width: 8),
-            Text(
-              'No Internet Connection',
-              style: TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
-      )
-          : null,
-    ));
+          body: Column(
+            children: [
+              Expanded(
+                child: _buildMessageList(),
+              ),
+              _buildMessageInput(),
+            ],
+          ),
+          bottomSheet: !_connectivityController.isConnected.value
+              ? Container(
+                  color: Colors.red,
+                  padding: const EdgeInsets.all(8),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.signal_wifi_off, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'No Internet Connection',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                )
+              : null,
+        ));
   }
 }

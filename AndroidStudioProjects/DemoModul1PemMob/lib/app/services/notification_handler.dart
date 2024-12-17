@@ -83,7 +83,7 @@ class FirebaseMessagingHandler {
       priority: Priority.high,
       ticker: 'ticker',
     );
-    var iOSPlatformChannelSpecifics = DarwinNotificationDetails(); // Pengaturan notifikasi untuk iOS
+    var iOSPlatformChannelSpecifics = const DarwinNotificationDetails(); // Pengaturan notifikasi untuk iOS
     var platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
       iOS: iOSPlatformChannelSpecifics,
@@ -101,7 +101,7 @@ class FirebaseMessagingHandler {
   flutterLocalNotificationsPlugin) async {
     var maxProgress = 5; // Jumlah total progres (misal 5 tahap)
     for (var i = 0; i <= maxProgress; i++) {
-      await Future.delayed(Duration(seconds: 1), () async {
+      await Future.delayed(const Duration(seconds: 1), () async {
         var androidPlatformChannelSpecifics = AndroidNotificationDetails(
           _androidChannel.id,
           _androidChannel.name,

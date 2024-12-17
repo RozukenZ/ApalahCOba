@@ -31,7 +31,7 @@ class LocationService {
     return true;
   }
 
-  /// Mendapatkan lokasi saat ini
+
   Future<String?> getCurrentLocation() async {
     // Pastikan layanan dan izin lokasi tersedia
     if (!await _checkLocationServiceEnabled() ||
