@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../routes/app_routes.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -30,14 +31,14 @@ class WelcomePage extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Get.toNamed('/login');  // Navigasi ke halaman login
+                Get.toNamed(AppRoutes.login);  // Navigasi ke halaman login
               },
               child: const Text('Login'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Get.toNamed('/register');  // Navigasi ke halaman register
+                Get.toNamed(AppRoutes.register);  // Navigasi ke halaman register
               },
               child: const Text('Register'),
             ),

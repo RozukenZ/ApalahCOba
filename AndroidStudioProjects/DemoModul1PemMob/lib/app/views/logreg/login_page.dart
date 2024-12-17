@@ -1,7 +1,7 @@
-import 'package:demomodul1pemmob/app/views/logreg/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controller/auth_controller.dart';
+import '../../routes/app_routes.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -30,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.offNamed(AppRoutes.welcome),
         ),
         elevation: 0,
       ),
@@ -161,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
             Center(
               child: GestureDetector(
                 onTap: () {
-                  Get.to(RegisterPage());
+                  Get.toNamed(AppRoutes.register);
                 },
                 child: RichText(
                   text: const TextSpan(
