@@ -7,8 +7,8 @@ class ChatService extends ChangeNotifier {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-
-  Future<void> sendMessage(String receiverId, String message, {required bool isSent}) async {
+  Future<void> sendMessage(String receiverId, String message,
+      {required bool isSent}) async {
     final String currentUserId = _firebaseAuth.currentUser!.uid;
     final String currentUserEmail = _firebaseAuth.currentUser!.email.toString();
     final Timestamp timestamp = Timestamp.now();
@@ -82,7 +82,8 @@ class ChatService extends ChangeNotifier {
         .delete();
   }
 
-  Future<void> editMessage(String chatRoomId, String messageId, String newMessageContent) async {
+  Future<void> editMessage(
+      String chatRoomId, String messageId, String newMessageContent) async {
     await _firestore
         .collection('chat_rooms')
         .doc(chatRoomId)
@@ -94,4 +95,3 @@ class ChatService extends ChangeNotifier {
     });
   }
 }
-

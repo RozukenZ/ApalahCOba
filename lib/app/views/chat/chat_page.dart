@@ -34,6 +34,7 @@ class _ChatPageState extends State<ChatPage> {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
   final GetStorage _storage = GetStorage();
+  late Stream<QuerySnapshot> _messagesStream;
 
   // GetX Controllers
   late HomeController _homeController;
@@ -56,6 +57,7 @@ class _ChatPageState extends State<ChatPage> {
     _homeController.onInit();
 
     final currentUserId = _firebaseAuth.currentUser!.uid;
+    _messagesStream = _chatService.getMessages(currentUserId, widget.receiverUserID);
     _markMessagesAsRead(currentUserId, widget.receiverUserID);
 
     ever(_connectivityController.isConnected, (isConnected) {
@@ -188,7 +190,6 @@ class _ChatPageState extends State<ChatPage> {
 
           remainingMessages.remove(messageData);
         } catch (e) {
-
           remainingMessages.add(messageData);
           print('Failed to send offline message: $e');
         }
@@ -304,17 +305,17 @@ class _ChatPageState extends State<ChatPage> {
         List<dynamic> allMessages = [
           ...snapshot.data?.docs ?? [],
           ...currentUserOfflineMessages.map((offlineMsg) => {
-                'id': offlineMsg['uniqueId'],
-                'data': () => {
-                      'senderId': _firebaseAuth.currentUser!.uid,
-                      'message': offlineMsg['message'],
-                      'timestamp': Timestamp.fromDate(
-                          DateTime.parse(offlineMsg['timestamp'])),
-                      'isSent': false,
-                      'isDelivered': false,
-                      'isRead': false,
-                    }
-              }),
+            'id': offlineMsg['uniqueId'],
+            'data': () => {
+              'senderId': _firebaseAuth.currentUser!.uid,
+              'message': offlineMsg['message'],
+              'timestamp': Timestamp.fromDate(
+                  DateTime.parse(offlineMsg['timestamp'])),
+              'isSent': false,
+              'isDelivered': false,
+              'isRead': false,
+            }
+          }),
         ];
 
         // No messages
@@ -334,6 +335,11 @@ class _ChatPageState extends State<ChatPage> {
           var timestampB =
               b is DocumentSnapshot ? b['timestamp'] : b['data']()['timestamp'];
           return timestampA.compareTo(timestampB);
+        });
+
+        // Scroll to bottom when new messages are added
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
         });
 
         return ListView(
