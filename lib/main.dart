@@ -10,25 +10,13 @@ import 'app/controller/connectivity_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // Initialize GetStorage
-  await GetStorage.init();
-
-  // Initialize SharedPreferences
   await Get.putAsync(() async => await SharedPreferences.getInstance());
-
-  // Initialize Connectivity Controller
+  await GetStorage.init();
   Get.put(ConnectivityController());
-
-  // Initialize Push Notifications
   await FirebaseMessagingHandler().initPushNotification();
-
-  // Run the app
   runApp(const MyApp());
 
   // Initialize Local Notifications

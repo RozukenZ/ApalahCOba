@@ -158,6 +158,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ? null
                         : () {
                             _authController.registerUser(
+                              _nameController.text,
                               _emailController.text,
                               _passwordController.text,
                             );
@@ -201,9 +202,9 @@ class _RegisterPageState extends State<RegisterPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildSocialButton('lib/app/assets/google_logo.png'),
+                  _buildSocialButton('assets/google_logo.png'),
                   const SizedBox(width: 20),
-                  _buildSocialButton('lib/app/assets/apple-logo.png'),
+                  _buildSocialButton('assets/apple-logo.png'),
                 ],
               ),
               const SizedBox(height: 20),

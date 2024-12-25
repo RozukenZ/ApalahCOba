@@ -88,12 +88,10 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         elevation: 2,
         child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
           leading: CircleAvatar(
             radius: 25,
-            backgroundImage: NetworkImage(
-                data['profilePicture'] ?? 'https://via.placeholder.com/150'),
+            backgroundImage: NetworkImage(data['profilePicture'] ?? 'https://via.placeholder.com/150'),
           ),
           title: Text(
             data['email'],
@@ -172,26 +170,21 @@ class _ChatScreenState extends State<ChatScreen> {
 
                   if (snapshot.data != null && snapshot.data!.docs.isNotEmpty) {
                     var lastMessage = snapshot.data!.docs.first;
-                    bool isRead =
-                        lastMessage['isRead'] ?? false; // Cek status isRead
-                    var timestamp =
-                        (lastMessage['timestamp'] as Timestamp).toDate();
+                    bool isRead = lastMessage['isRead'] ?? false;
+                    var timestamp = (lastMessage['timestamp'] as Timestamp).toDate();
                     String time = '${timestamp.hour}:${timestamp.minute}';
 
                     return Column(
                       children: [
                         Text(
-                          time, // Menampilkan waktu pesan
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.grey[500]),
+                          time,
+                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                         ),
                         const SizedBox(height: 5),
-                        // Jika pesan belum dibaca, tampilkan centang hijau
-                        if (!isRead)
-                          const CircleAvatar(
+                          CircleAvatar(
                             radius: 10,
-                            backgroundColor: Colors.green,
-                            child: Icon(
+                            backgroundColor: isRead ? Colors.green : Colors.grey,
+                            child: const Icon(
                               Icons.check,
                               size: 12,
                               color: Colors.white,
@@ -209,6 +202,9 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ],
           ),
+
+
+
           onTap: () {
             Navigator.push(
               context,

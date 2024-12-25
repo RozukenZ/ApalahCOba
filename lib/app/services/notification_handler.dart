@@ -1,7 +1,7 @@
 import 'dart:convert';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)
 async {
   print('Pesan diterima di background: ${message.notification?.title}');
@@ -19,7 +19,6 @@ class FirebaseMessagingHandler {
   final _localNotification = FlutterLocalNotificationsPlugin();
 
   Future<void> initPushNotification() async {
-    // Izin notifikasi dari pengguna
     NotificationSettings settings = await
     _firebaseMessaging.requestPermission(
       alert: true,
@@ -32,7 +31,7 @@ class FirebaseMessagingHandler {
     );
 
     print('Izin yang diberikan pengguna: ${settings.authorizationStatus}');
-    // Mendapatkan token FCM
+
     _firebaseMessaging.getToken().then((token) {
       print('FCM Token: $token');
     });

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,14 +14,14 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    checkLoginStatus(); // Periksa status login saat controller diinisialisasi
+    checkLoginStatus();
   }
 
   Future<void> checkLoginStatus() async {
     isLoggedIn.value = _prefs.containsKey('user_token');
   }
 
-  Future<UserCredential> registerUser(String email, String password) async {
+  Future<UserCredential> registerUser(String name, String email, String password) async {
     try {
       isLoading.value = true;
 
@@ -29,15 +30,20 @@ class AuthController extends GetxController {
         email: email,
         password: password,
       );
+
+      await Future.delayed(const Duration(seconds: 1));
+      await updateFcmToken(userCredential.user!.uid);
+
       Get.snackbar('Success', 'Registration successful',
           backgroundColor: Colors.green);
-      _firestore
+      await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
-          .set({'uid': userCredential.user!.uid, 'email': email});
-      Get.offAllNamed('/login'); // Navigasi ke halaman Login
+          .set({'uid': userCredential.user!.uid, 'email': email, 'name': name});
+      Get.toNamed('/login');
       return userCredential;
     } on FirebaseAuthException catch (e) {
+      isLoading.value = false;
       Get.snackbar('Error', 'Registration failed: $e',
           backgroundColor: Colors.red);
       throw Exception(e.code);
@@ -53,29 +59,75 @@ class AuthController extends GetxController {
         email: email,
         password: password,
       );
-      _prefs.setString('user_token', _auth.currentUser!.uid);
-      Get.snackbar('Success', 'Login successful',
-          backgroundColor: Colors.green);
-      _firestore
+
+      DocumentSnapshot userDoc = await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
-          .set({'uid': userCredential.user!.uid, 'email': email}, SetOptions(merge: true));
-      Get.offAllNamed('/home');
-      return userCredential;
+          .get();
+
+      if (userDoc.exists) {
+        bool isLoginInUse = userDoc['isLogin'] ?? false;
+        if (isLoginInUse) {
+          Get.snackbar(
+            'Error',
+            'Akun sedang digunakan di perangkat lain',
+            backgroundColor: Colors.red,
+          );
+          await _auth.signOut();
+          isLoggedIn.value = false;
+          return Future.error('Akun sedang digunakan di perangkat lain');
+        } else {
+          await Future.delayed(
+              const Duration(seconds: 1)); // Simulasi penundaan
+          await _prefs.setString('user_token', _auth.currentUser!.uid);
+          _firestore.collection('users').doc(userCredential.user!.uid).set(
+            {'uid': userCredential.user!.uid, 'email': email, 'isLogin': true},
+            SetOptions(merge: true),
+          );
+
+          await updateFcmToken(userCredential.user!.uid);
+          Get.snackbar('Success', 'Login successful',
+              backgroundColor: Colors.green);
+
+          Get.toNamed('/home');
+          isLoggedIn.value = true;
+          return userCredential;
+        }
+      } else {
+        // Jika dokumen user tidak ada di Firestore
+        throw Exception("User data not found in Firestore");
+      }
     } on FirebaseAuthException catch (e) {
-      Get.snackbar('Error', 'Login failed: $e', backgroundColor: Colors.red);
-      throw Exception(e.code);
+      isLoading.value = false;
+      Get.snackbar('Error', 'Login failed: ${e.message}',
+          backgroundColor: Colors.red);
+      return Future.error('Login failed: ${e.message}');
     } finally {
       isLoading.value = false;
     }
   }
 
+  Future<void> updateFcmToken(String uid) async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    String? token = await messaging.getToken();
+
+    if (token != null) {
+      // Perbarui token FCM di Firestore
+      await _firestore.collection('users').doc(uid).set({
+        'fcmToken': token,
+      }, SetOptions(merge: true));
+      _prefs.setString('user_token', uid); // Simpan UID ke shared preferences
+    }
+  }
+
   void logout() async {
+    await _firestore
+        .collection('users')
+        .doc(_auth.currentUser!.uid)
+        .set({'isLogin': false, 'fcmToken': FieldValue.delete()}, SetOptions(merge: true));
     _prefs.remove('user_token');
     isLoggedIn.value = false;
     _auth.signOut();
-    Get.offAllNamed(
-        '/welcome'); // Menghapus semua halaman dari stack dan kembali ke halaman login.
+    Get.offAllNamed('/welcome');
   }
-
 }
