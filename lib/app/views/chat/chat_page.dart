@@ -34,7 +34,6 @@ class _ChatPageState extends State<ChatPage> {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
   final GetStorage _storage = GetStorage();
-  late Stream<QuerySnapshot> _messagesStream;
 
   // GetX Controllers
   late HomeController _homeController;
@@ -57,7 +56,6 @@ class _ChatPageState extends State<ChatPage> {
     _homeController.onInit();
 
     final currentUserId = _firebaseAuth.currentUser!.uid;
-    _messagesStream = _chatService.getMessages(currentUserId, widget.receiverUserID);
     _markMessagesAsRead(currentUserId, widget.receiverUserID);
 
     ever(_connectivityController.isConnected, (isConnected) {
@@ -158,7 +156,6 @@ class _ChatPageState extends State<ChatPage> {
   void _saveOfflineMessage(String message) {
     List<dynamic> offlineMessages = _storage.read('offline_messages') ?? [];
 
-    // Tambahkan informasi tambahan untuk memudahkan tracking
     offlineMessages.add({
       'message': message,
       'receiverUserId': widget.receiverUserID,
@@ -167,12 +164,11 @@ class _ChatPageState extends State<ChatPage> {
       'timestamp': DateTime.now().toIso8601String(),
       'uniqueId': DateTime.now()
           .millisecondsSinceEpoch
-          .toString(), // Tambahkan unique identifier
+          .toString(),
     });
 
     _storage.write('offline_messages', offlineMessages);
 
-    // Perbarui state untuk menampilkan pesan di UI
     setState(() {});
   }
 
@@ -188,24 +184,18 @@ class _ChatPageState extends State<ChatPage> {
               messageData['receiverUserId'], messageData['message'],
               isSent: true);
 
-          // Jika pesan berhasil dikirim, hapus dari offline storage
           print('Offline message sent: ${messageData['message']}');
 
-          // Pesan yang berhasil dikirim harus dihapus dari offline storage
-          // (Jika Anda ingin menyimpannya sebagai pesan yang berhasil dikirim, Anda bisa menyimpannya di tempat lain, seperti Firestore)
-          // Hapus pesan offline yang sudah berhasil dikirim
           remainingMessages.remove(messageData);
         } catch (e) {
-          // Jika gagal mengirim, simpan kembali ke daftar pesan offline
+
           remainingMessages.add(messageData);
           print('Failed to send offline message: $e');
         }
       }
 
-      // Perbarui daftar pesan offline yang tersisa (pesan yang gagal terkirim)
       _storage.write('offline_messages', remainingMessages);
 
-      // Perbarui UI untuk menampilkan pesan terkirim (status dikirim)
       setState(() {});
     }
   }

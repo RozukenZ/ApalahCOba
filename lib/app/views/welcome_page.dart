@@ -14,7 +14,7 @@ class WelcomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'lib/app/assets/chat.png',
+              'assets/chat.png',
               width: 100,
               height: 100,
               fit: BoxFit.contain,
