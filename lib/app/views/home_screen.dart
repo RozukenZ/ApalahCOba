@@ -1,5 +1,6 @@
 import 'package:demomodul1pemmob/app/views/community/community.dart';
 import 'package:demomodul1pemmob/app/views/story/story_page.dart';
+import 'package:demomodul1pemmob/app/views/weather/weather_screen.dart';
 import 'chat/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     const ChatScreen(),
     const StoryScreen(),
+    WeatherScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -41,7 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // Tindakan ketika tombol pengaturan ditekan
               Get.toNamed(AppRoutes.settings);
             },
           ),
@@ -49,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             onPressed: () {
-              _authController.logout(); // Panggil fungsi logout ketika tombol ditekan.
+              _authController.logout();
             },
           ),
         ],
@@ -68,6 +69,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.photo),
             label: 'Cerita',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.cloud),
+            label: 'Cuaca', // Tab baru
           ),
         ],
         currentIndex: _selectedIndex,
