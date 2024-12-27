@@ -81,6 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
     Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
 
     if (_firebaseAuth.currentUser!.email != data['email']) {
+      final String Name = data['name'];
       return Card(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         shape: RoundedRectangleBorder(
@@ -90,8 +91,11 @@ class _ChatScreenState extends State<ChatScreen> {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
           leading: CircleAvatar(
-            radius: 25,
-            backgroundImage: NetworkImage(data['profilePicture'] ?? 'https://via.placeholder.com/150'),
+            backgroundColor: Colors.grey[800],
+            child: Text(
+              data['name'][0].toUpperCase(),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
           title: Text(
             data['name'],
@@ -212,6 +216,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 builder: (context) => ChatPage(
                   receiverUserEmail: data['email'],
                   receiverUserID: data['uid'],
+                  receiverUserName: data['name'],
                 ),
               ),
             );

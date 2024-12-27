@@ -34,7 +34,10 @@ class CommunityScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Komunitas Whatsapp'),
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Komunitas'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

@@ -10,6 +10,12 @@ class WeatherScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Weather'),
+      ),
       body: Obx(() {
         if (weatherController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -34,25 +40,36 @@ class WeatherScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // City Name and Temperature
-              Text(
-                cityName,
-                style: const TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.yellow,
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blueGrey.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '$temperature°C',
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                child: Column(
+                  children: [
+                    Text(
+                      cityName,
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.yellow,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '$temperature°C',
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const Divider(
-                color: Colors.white,
+                color: Colors.blueGrey,
               ),
               const SizedBox(height: 20),
               // Weather Description
@@ -102,7 +119,7 @@ class InfoCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.green.shade50,
+            color: Colors.blueGrey,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(

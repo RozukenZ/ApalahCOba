@@ -10,7 +10,7 @@ class SplashScreen extends StatelessWidget {
     Get.put(SplashController()); // Inisialisasi SplashController
 
     return Scaffold(
-      backgroundColor: Colors.green,
+      backgroundColor: Colors.greenAccent,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

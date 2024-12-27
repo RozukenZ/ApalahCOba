@@ -35,7 +35,7 @@ class WelcomePage extends StatelessWidget {
                 const Text(
                   'SELAMAT DATANG',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.grey,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),

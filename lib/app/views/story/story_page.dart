@@ -44,7 +44,8 @@ class _StoryScreenState extends State<StoryScreen> {
 
         // Save the video path to shared preferences
         final prefs = await SharedPreferences.getInstance();
-        final List<String> currentVideosPaths = _recordedVideos.map((video) => video.path).toList();
+        final List<String> currentVideosPaths =
+            _recordedVideos.map((video) => video.path).toList();
         await prefs.setStringList('savedVideos', currentVideosPaths);
       }
     } catch (e) {
@@ -58,7 +59,8 @@ class _StoryScreenState extends State<StoryScreen> {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final newPath = '${directory.path}/${video.path.split('/').last}';
-      final savedVideo = await video.copy(newPath); // Salin file ke lokasi permanen
+      final savedVideo =
+          await video.copy(newPath); // Salin file ke lokasi permanen
       print('Video disimpan di: $newPath'); // Debugging: Cetak path baru
       return savedVideo;
     } catch (e) {
@@ -79,16 +81,14 @@ class _StoryScreenState extends State<StoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Halaman Cerita'),
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Cerita'),
       ),
       body: Column(
         children: [
-          ElevatedButton.icon(
-            onPressed: _recordVideo,
-            icon: const Icon(Icons.videocam),
-            label: const Text('Rekam Video'),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
           Expanded(
             child: _recordedVideos.isNotEmpty
                 ? ListView.builder(
@@ -108,6 +108,19 @@ class _StoryScreenState extends State<StoryScreen> {
           ),
         ],
       ),
+      // Letakkan tombol rekam video di bawah
+      floatingActionButton: Container(
+        margin: const EdgeInsets.all(20),
+        child: FloatingActionButton(
+          onPressed: _recordVideo,
+          backgroundColor: Colors.blueAccent,
+          child: const Icon(
+            Icons.videocam,
+            size: 35,
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
@@ -163,26 +176,26 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         child: _isLoading
             ? const CircularProgressIndicator()
             : AspectRatio(
-          aspectRatio: _controller.value.aspectRatio,
-          child: VideoPlayer(_controller),
-        ),
+                aspectRatio: _controller.value.aspectRatio,
+                child: VideoPlayer(_controller),
+              ),
       ),
       floatingActionButton: _isLoading
           ? null
           : FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            if (_controller.value.isPlaying) {
-              _controller.pause();
-            } else {
-              _controller.play();
-            }
-          });
-        },
-        child: Icon(
-          _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-        ),
-      ),
+              onPressed: () {
+                setState(() {
+                  if (_controller.value.isPlaying) {
+                    _controller.pause();
+                  } else {
+                    _controller.play();
+                  }
+                });
+              },
+              child: Icon(
+                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+              ),
+            ),
     );
   }
 }

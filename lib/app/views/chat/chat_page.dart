@@ -15,11 +15,13 @@ import '../../controller/location_controller.dart';
 class ChatPage extends StatefulWidget {
   final String receiverUserEmail;
   final String receiverUserID;
+  final String receiverUserName;
 
   const ChatPage({
     Key? key,
     required this.receiverUserEmail,
     required this.receiverUserID,
+    required this.receiverUserName,
   }) : super(key: key);
 
   @override
@@ -619,7 +621,7 @@ class _ChatPageState extends State<ChatPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.receiverUserEmail,
+                        widget.receiverUserName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,

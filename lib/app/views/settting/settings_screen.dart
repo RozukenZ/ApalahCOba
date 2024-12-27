@@ -49,7 +49,7 @@ class SettingsScreen extends StatelessWidget {
             image: DecorationImage(
               image: _settingsViewModel.profilePicture != null
                   ? FileImage(_settingsViewModel.profilePicture!)
-                  : const AssetImage('lib/app/assets/default_avatar.png')
+                  : const AssetImage('assets/default_avatar.png')
               as ImageProvider,
               fit: BoxFit.contain,
             ),
@@ -82,7 +82,7 @@ class SettingsScreen extends StatelessWidget {
                 backgroundColor: Colors.grey,
                 backgroundImage: _settingsViewModel.profilePicture != null
                     ? FileImage(_settingsViewModel.profilePicture!)
-                    : const AssetImage('lib/assets/default_avatar.png') as ImageProvider,
+                    : const AssetImage('assets/default_avatar.png') as ImageProvider,
               ),
             ),
             title: FutureBuilder<DocumentSnapshot>(
@@ -104,7 +104,7 @@ class SettingsScreen extends StatelessWidget {
                 return Text(name);
               },
             ),
-            subtitle: const Text('Hey there! I am using WhatsApp'),
+            subtitle: const Text('Hey there! I am using OurChat'),
             trailing: const Icon(Icons.qr_code),
           ),
           Divider(color: Colors.grey[800]),
@@ -123,7 +123,7 @@ class SettingsScreen extends StatelessWidget {
           SettingsListTile(
               icon: Icons.help_outline,
               title: 'Help',
-              subtitle: 'Help centre, contact us',
+              subtitle: 'Help center, contact us',
               onTap: () => Get.to(() => HelpScreen()),
         ),
         ],
