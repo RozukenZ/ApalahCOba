@@ -1,3 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:demomodul1pemmob/app/views/settting/account/ganti_nama.dart';
+import 'package:demomodul1pemmob/app/views/settting/help/help_setting.dart';
+import 'package:demomodul1pemmob/app/views/settting/theme/theme_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:demomodul1pemmob/app/view_models/settings_view_model.dart';
@@ -77,37 +82,50 @@ class SettingsScreen extends StatelessWidget {
                 backgroundColor: Colors.grey,
                 backgroundImage: _settingsViewModel.profilePicture != null
                     ? FileImage(_settingsViewModel.profilePicture!)
-                    : const AssetImage('lib/assets/default_avatar.png')
-                as ImageProvider,
+                    : const AssetImage('lib/assets/default_avatar.png') as ImageProvider,
               ),
             ),
-            title: const Text('Blah blah'),
+            title: FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser?.uid)
+                  .get(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Text('Loading...');
+                }
+                if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+                  return const Text('Error loading name');
+                }
+
+                // Mendapatkan data nama dari Firestore
+                var userData = snapshot.data!.data() as Map<String, dynamic>;
+                String name = userData['name'] ?? 'No Name';
+                return Text(name);
+              },
+            ),
             subtitle: const Text('Hey there! I am using WhatsApp'),
             trailing: const Icon(Icons.qr_code),
           ),
           Divider(color: Colors.grey[800]),
-          const SettingsListTile(
+          SettingsListTile(
               icon: Icons.key,
               title: 'Account',
-              subtitle: 'Privacy, security, change number'),
-          const SettingsListTile(
-              icon: Icons.chat,
-              title: 'Chats',
-              subtitle: 'Theme, wallpapers, chat history'),
-          const SettingsListTile(
-              icon: Icons.notifications,
-              title: 'Notifications',
-              subtitle: 'Message, group & call tones'),
-          const SettingsListTile(
-              icon: Icons.data_usage,
-              title: 'Storage and data',
-              subtitle: 'Network usage, auto-download'),
-          const SettingsListTile(
+              subtitle: 'Change your Username',
+              onTap: () => Get.to(() => UpdateNameScreen()),
+          ),
+          SettingsListTile(
+              icon: Icons.palette,
+              title: 'Theme',
+              subtitle: 'Dark Mode or Light Mode',
+              onTap: () => Get.to(() => ThemeScreen()),
+          ),
+          SettingsListTile(
               icon: Icons.help_outline,
               title: 'Help',
-              subtitle: 'Help centre, contact us, privacy policy'),
-          const SettingsListTile(
-              icon: Icons.group_add, title: 'Invite a friend', subtitle: ''),
+              subtitle: 'Help centre, contact us',
+              onTap: () => Get.to(() => HelpScreen()),
+        ),
         ],
       ),
     );

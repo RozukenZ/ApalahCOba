@@ -26,7 +26,7 @@ class AuthController extends GetxController {
       isLoading.value = true;
 
       UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
+      await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -39,7 +39,7 @@ class AuthController extends GetxController {
       await _firestore
           .collection('users')
           .doc(userCredential.user!.uid)
-          .set({'uid': userCredential.user!.uid, 'email': email, 'name': name});
+          .set({'uid': userCredential.user!.uid, 'email': email, 'name': name, 'isLogin': false});
       Get.toNamed('/login');
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -106,6 +106,35 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<void> updateUserName(String uid, String newName) async {
+    try {
+      isLoading.value = true; // Indikator proses sedang berjalan
+
+      // Update nama di Firestore
+      await _firestore.collection('users').doc(uid).update({'name': newName});
+
+      // Berikan notifikasi keberhasilan
+      Get.snackbar(
+        'Success',
+        'Name updated successfully',
+        backgroundColor: Colors.green,
+      );
+
+      Get.back();
+    } catch (e) {
+      // Berikan notifikasi jika ada kesalahan
+      Get.snackbar(
+        'Error',
+        'Failed to update name: $e',
+        backgroundColor: Colors.red,
+      );
+      throw Exception('Failed to update name: $e');
+    } finally {
+      isLoading.value = false; // Selesaikan proses loading
+    }
+  }
+
 
   Future<void> updateFcmToken(String uid) async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;

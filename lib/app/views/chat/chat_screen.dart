@@ -94,11 +94,11 @@ class _ChatScreenState extends State<ChatScreen> {
             backgroundImage: NetworkImage(data['profilePicture'] ?? 'https://via.placeholder.com/150'),
           ),
           title: Text(
-            data['email'],
-            style: const TextStyle(
+            data['name'],
+            style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 15,
-              color: Colors.white,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           subtitle: StreamBuilder<QuerySnapshot>(
