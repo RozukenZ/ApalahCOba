@@ -43,17 +43,48 @@ class WelcomePage extends StatelessWidget {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    Get.toNamed(AppRoutes.login);  // Navigasi ke halaman login
+                    Get.toNamed(AppRoutes.login); // Navigasi ke halaman login
                   },
-                  child: const Text('Login'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent, // Warna latar
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 32), // Padding tombol
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10), // Sudut membulat
+                    ),
+                    elevation: 5, // Efek elevasi (bayangan)
+                  ),
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(
+                      fontSize: 18, // Ukuran font
+                      fontWeight: FontWeight.bold, // Tebal font
+                      color: Colors.white, // Warna teks
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    Get.toNamed(AppRoutes.register);  // Navigasi ke halaman register
+                    Get.toNamed(AppRoutes.register); // Navigasi ke halaman register
                   },
-                  child: const Text('Register'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green, // Warna latar
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 32), // Padding tombol
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10), // Sudut membulat
+                    ),
+                    elevation: 5, // Efek elevasi (bayangan)
+                  ),
+                  child: const Text(
+                    'Register',
+                    style: TextStyle(
+                      fontSize: 18, // Ukuran font
+                      fontWeight: FontWeight.bold, // Tebal font
+                      color: Colors.white, // Warna teks
+                    ),
+                  ),
                 ),
+
               ],
             ),
           );

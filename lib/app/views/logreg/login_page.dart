@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'WA Jadi-jadian',
+              'OurChat',
               style: TextStyle(
                 color: Colors.green,
                 fontSize: 24,
