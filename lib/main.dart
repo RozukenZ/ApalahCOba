@@ -65,7 +65,7 @@ class MyApp extends StatelessWidget {
           ),
           iconTheme: const IconThemeData(color: Colors.white), // Icon color
         ),
-        initialRoute: AppRoutes.welcome,
+        initialRoute: AppRoutes.splash,
         getPages: AppRoutes.routes,
       );
     });

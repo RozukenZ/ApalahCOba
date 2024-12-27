@@ -11,6 +11,7 @@ class AuthController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   RxBool isLoading = false.obs;
   RxBool isLoggedIn = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -25,8 +26,7 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
-      UserCredential userCredential =
-      await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -34,18 +34,24 @@ class AuthController extends GetxController {
       await Future.delayed(const Duration(seconds: 1));
       await updateFcmToken(userCredential.user!.uid);
 
-      Get.snackbar('Success', 'Registration successful',
-          backgroundColor: Colors.green);
-      await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({'uid': userCredential.user!.uid, 'email': email, 'name': name, 'isLogin': false});
+      // Notifikasi berhasil menggunakan ScaffoldMessenger
+      _showSnackbar('Success', 'Registration successful', Colors.green);
+
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        'uid': userCredential.user!.uid,
+        'email': email,
+        'name': name,
+        'isLogin': false,
+      });
+
       Get.toNamed('/login');
       return userCredential;
     } on FirebaseAuthException catch (e) {
       isLoading.value = false;
-      Get.snackbar('Error', 'Registration failed: $e',
-          backgroundColor: Colors.red);
+
+      // Notifikasi gagal menggunakan ScaffoldMessenger
+      _showSnackbar('Error', 'Registration failed: ${e.message}', Colors.red);
+
       throw Exception(e.code);
     } finally {
       isLoading.value = false;
@@ -55,52 +61,52 @@ class AuthController extends GetxController {
   Future<UserCredential> loginUser(String email, String password) async {
     try {
       isLoading.value = true;
+
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      DocumentSnapshot userDoc = await _firestore
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .get();
+      DocumentSnapshot userDoc =
+      await _firestore.collection('users').doc(userCredential.user!.uid).get();
 
       if (userDoc.exists) {
         bool isLoginInUse = userDoc['isLogin'] ?? false;
         if (isLoginInUse) {
-          Get.snackbar(
+          _showSnackbar(
             'Error',
             'Akun sedang digunakan di perangkat lain',
-            backgroundColor: Colors.red,
+            Colors.red,
           );
+
           await _auth.signOut();
           isLoggedIn.value = false;
           return Future.error('Akun sedang digunakan di perangkat lain');
         } else {
-          await Future.delayed(
-              const Duration(seconds: 1)); // Simulasi penundaan
+          await Future.delayed(const Duration(seconds: 1)); // Simulasi penundaan
           await _prefs.setString('user_token', _auth.currentUser!.uid);
+
           _firestore.collection('users').doc(userCredential.user!.uid).set(
             {'uid': userCredential.user!.uid, 'email': email, 'isLogin': true},
             SetOptions(merge: true),
           );
 
           await updateFcmToken(userCredential.user!.uid);
-          Get.snackbar('Success', 'Login successful',
-              backgroundColor: Colors.green);
+
+          _showSnackbar('Success', 'Login successful', Colors.green);
 
           Get.toNamed('/home');
           isLoggedIn.value = true;
           return userCredential;
         }
       } else {
-        // Jika dokumen user tidak ada di Firestore
         throw Exception("User data not found in Firestore");
       }
     } on FirebaseAuthException catch (e) {
       isLoading.value = false;
-      Get.snackbar('Error', 'Login failed: ${e.message}',
-          backgroundColor: Colors.red);
+
+      _showSnackbar('Error', 'Login failed: ${e.message}', Colors.red);
+
       return Future.error('Login failed: ${e.message}');
     } finally {
       isLoading.value = false;
@@ -111,23 +117,20 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true; // Indikator proses sedang berjalan
 
-      // Update nama di Firestore
       await _firestore.collection('users').doc(uid).update({'name': newName});
 
-      // Berikan notifikasi keberhasilan
-      Get.snackbar(
+      _showSnackbar(
         'Success',
         'Name updated successfully',
-        backgroundColor: Colors.green,
+        Colors.green,
       );
 
       Get.back();
     } catch (e) {
-      // Berikan notifikasi jika ada kesalahan
-      Get.snackbar(
+      _showSnackbar(
         'Error',
         'Failed to update name: $e',
-        backgroundColor: Colors.red,
+        Colors.red,
       );
       throw Exception('Failed to update name: $e');
     } finally {
@@ -135,17 +138,15 @@ class AuthController extends GetxController {
     }
   }
 
-
   Future<void> updateFcmToken(String uid) async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
 
     if (token != null) {
-      // Perbarui token FCM di Firestore
       await _firestore.collection('users').doc(uid).set({
         'fcmToken': token,
       }, SetOptions(merge: true));
-      _prefs.setString('user_token', uid); // Simpan UID ke shared preferences
+      _prefs.setString('user_token', uid);
     }
   }
 
@@ -159,4 +160,20 @@ class AuthController extends GetxController {
     _auth.signOut();
     Get.offAllNamed('/welcome');
   }
+
+  // Metode untuk menampilkan notifikasi menggunakan ScaffoldMessenger
+  void _showSnackbar(String title, String message, Color backgroundColor) {
+    final context = Get.context;
+    if (context != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$title: $message'),
+          backgroundColor: backgroundColor,
+        ),
+      );
+    } else {
+      debugPrint("Unable to show snackbar because context is null.");
+    }
+  }
+
 }

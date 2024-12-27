@@ -3,9 +3,11 @@ import '../views/home_screen.dart';
 import '../views/logreg/login_page.dart';
 import '../views/logreg/register_page.dart';
 import '../views/settting/settings_screen.dart';
+import '../views/splash_screen.dart';
 import '../views/welcome_page.dart';
 
 class AppRoutes {
+  static const splash = '/';
   static const welcome = '/welcome';
   static const login = '/login';
   static const register = '/register';
@@ -18,5 +20,6 @@ class AppRoutes {
     GetPage(name: register, page: () => const RegisterPage()),
     GetPage(name: home, page: () => const HomeScreen()),
     GetPage(name: settings, page: () => SettingsScreen()),
+    GetPage(name: splash, page: () => const SplashScreen()),
   ];
 }
