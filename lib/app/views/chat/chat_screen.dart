@@ -81,7 +81,6 @@ class _ChatScreenState extends State<ChatScreen> {
     Map<String, dynamic> data = document.data()! as Map<String, dynamic>;
 
     if (_firebaseAuth.currentUser!.email != data['email']) {
-      final String Name = data['name'];
       return Card(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         shape: RoundedRectangleBorder(
